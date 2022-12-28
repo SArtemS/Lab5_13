@@ -27,21 +27,17 @@ def get_currencies(currencies_ids_lst=['R01239', 'R01235', 'R01035']):
 def get_year_currency(currency_id = 'R01820'):
     import time
     result = {}
-    day_diff = 86400
-    day_count = 365
-    dt_now = int(time.time())
-    dt = dt_now - day_diff * day_count
-    while dt != dt_now:
-        dt_i = str(time.strftime("%d/%m/%Y", time.gmtime(dt)))
-        cur_res_str = requests.get(f"https://cbr.ru/scripts/XML_daily.asp?date_req={dt_i}")
-        root = ET.fromstring(cur_res_str.content)
-        valutes = root.findall('Valute')
-        for el in valutes:
-            valute_id = el.get('ID')
-            if str(valute_id) in currency_id:
-                valute_cur_val = el.find('Value').text
-                result[f'{dt_i}'] = valute_cur_val
-        dt += day_diff
+    dt_dm = str(time.strftime("%d/%m/", time.gmtime()))
+    dt_y = int(time.strftime("%Y", time.gmtime())) 
+    cur_res_str = requests.get(f"https://cbr.ru/scripts/XML_dynamic.asp?date_req1={dt_dm}{dt_y - 1}&date_req2={dt_dm}{dt_y}&VAL_NM_RQ={currency_id}")
+    root = ET.fromstring(cur_res_str.content)
+    valutes = root.findall('Record')
+    for el in valutes:
+        valute_date = el.get('Date')
+        valute_cur_val = el.find('Value').text
+        result[f'{valute_date}'] = valute_cur_val
+    
+    print(result)
 
     return result
 
@@ -86,7 +82,7 @@ if __name__ == '__main__':
     ax[1].set_title('График вашей валюты за последний год', fontsize = 24)
     ax[1].set_xlabel('Дата', fontsize = 16)
     ax[1].set_ylabel('Рубли', fontsize = 16)
-    # ax[1].tick_params('x', labelrotation=90, labelsize = 5) # настройка тиков 
-    ax[1].axes.axes.get_xaxis().set_ticks([]) # прячем тики для оси x
+    ax[1].tick_params('x', labelrotation=90, labelsize = 5) # настройка тиков 
+    # ax[1].axes.axes.get_xaxis().set_ticks([]) # прячем тики для оси x
 
     plt.show()
